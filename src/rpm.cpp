@@ -39,6 +39,9 @@ int main()
     {
         if (event.frame.canId == 0x200){
             if (reassembler.OnFrame(event.frame)){
+                if (reassembler.buffer.size() > 32) {
+                    reassembler.buffer.resize(32);
+                }
                     currentAcc.store(decode(decrypt_aes(reassembler.buffer, key)));
             }
         }
