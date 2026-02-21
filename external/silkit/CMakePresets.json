@@ -1,0 +1,270 @@
+﻿{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "mixin-dirs",
+            "description": "Set default binary / install dirs",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/_build/${presetName}",
+            "installDir": "${sourceDir}/_install/${presetName}",
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}",
+                    "rsyncCommandArgs": [ "--copy-links", "--exclude", "_build" ]
+                }
+            }
+        },
+
+        {
+            "name": "distrib",
+            "inherits": [ "mixin-dirs"],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "SILKIT_BUILD_TESTS": "ON",
+                "SILKIT_BUILD_UTILITIES": "ON",
+                "SILKIT_INSTALL_SOURCE": "ON",
+                "SILKIT_PACKAGE_SYMBOLS": "ON",
+                "SILKIT_WARNINGS_AS_ERRORS": "ON",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
+            },
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "debug",
+            "inherits": [  "mixin-dirs"],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "SILKIT_BUILD_TESTS": "ON",
+                "SILKIT_BUILD_UTILITIES": "ON",
+                "SILKIT_WARNINGS_AS_ERRORS": "ON",
+                "SILKIT_PACKAGE_SYMBOLS": "OFF",
+                "SILKIT_INSTALL_SOURCE": "OFF",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
+            },
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "release",
+            "inherits": ["debug"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "relwithdebinfo",
+            "inherits": [ "debug"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "x86-debug",
+            "inherits": ["debug"],
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+        },
+        {
+            "name": "x86-release",
+            "inherits": "x86-debug",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+        },
+        {
+            "name": "x86-relwithdebinfo",
+            "inherits": "x86-debug",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+        },
+
+        {
+            "name": "mixin-toolset-v141",
+            "description": "Set MSVC toolset v141",
+            "hidden": true,
+            "cacheVariables": {
+                "SILKIT_REQUIRED_MSVC_TOOLSET_VERSION": "v141"
+            },
+            "toolset": {
+                "value": "v141",
+                "strategy": "external"
+            }
+        },
+
+        {
+            "name": "vs141-x86-debug",
+            "inherits": [ "mixin-toolset-v141", "x86-debug"]
+        },
+        {
+            "name": "vs141-x64-debug",
+            "inherits": ["mixin-toolset-v141", "debug" ]
+        },
+
+
+        {
+            "name": "x-cross-armeabihf-debug",
+            "inherits": [ "debug" ],
+            "toolchainFile": "${sourceDir}/SilKit/cmake/toolchain-arm-linux-gnueabihf.cmake"
+        },
+        {
+            "name": "x-cross-armeabi-debug",
+            "inherits": [ "debug" ],
+            "toolchainFile": "${sourceDir}/SilKit/cmake/toolchain-arm-linux-gnueabi.cmake"
+        },
+        {
+            "name": "x-cross-qnx-x86_64",
+            "generator": "Unix Makefiles",
+            "inherits": [ "mixin-dirs" ],
+            "toolchainFile": "${sourceDir}/SilKit/cmake/toolchain-qnx-x86_64.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "SILKIT_BUILD_TESTS": "ON",
+                "SILKIT_BUILD_UTILITIES": "ON",
+                "SILKIT_WARNINGS_AS_ERRORS": "OFF",
+                "SILKIT_PACKAGE_SYMBOLS": "ON",
+                "SILKIT_BUILD_DASHBOARD": "OFF"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}",
+                    "rsyncCommandArgs": [ "--exclude", "_build" ]
+                }
+            }
+        },
+        {
+            "name": "x-cross-qnx-armv7",
+            "inherits": "x-cross-qnx-x86_64",
+            "toolchainFile": "${sourceDir}/SilKit/cmake/toolchain-qnx-armv7.cmake"
+        },
+        {
+            "name": "x-cross-qnx-aarch64",
+            "inherits": "x-cross-qnx-x86_64",
+            "toolchainFile": "${sourceDir}/SilKit/cmake/toolchain-qnx-aarch64.cmake"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "distrib",
+            "configurePreset": "distrib"
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "relwithdebinfo",
+            "configurePreset": "relwithdebinfo"
+        },
+        {
+            "name": "x86-debug",
+            "configurePreset": "x86-debug"
+        },
+        {
+            "name": "x86-release",
+            "configurePreset": "x86-release"
+        },
+        {
+            "name": "vs141-x86-debug",
+            "configurePreset": "vs141-x86-debug"
+        },
+        {
+            "name": "vs141-x64-debug",
+            "configurePreset": "vs141-x64-debug"
+        },
+
+        {
+            "name": "x-cross-qnx-x86_64",
+            "configurePreset": "x-cross-qnx-x86_64"
+        },
+        {
+            "name": "x-cross-qnx-armv7",
+            "configurePreset": "x-cross-qnx-armv7"
+        },
+        {
+            "name": "x-cross-qnx-aarch64",
+            "configurePreset": "x-cross-qnx-aarch64"
+        },
+        {
+            "name": "x-cross-armeabihf-debug",
+            "configurePreset": "x-cross-armeabihf-debug"
+        },
+        {
+            "name": "x-cross-armeabi-debug",
+            "configurePreset": "x-cross-armeabi-debug"
+        }
+    ],
+
+    "testPresets": [
+        {
+            "name": "distrib",
+            "configurePreset": "distrib"
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "relwithdebinfo",
+            "configurePreset": "relwithdebinfo"
+        },
+        {
+            "name": "x86-debug",
+            "configurePreset": "x86-debug"
+        },
+        {
+            "name": "x86-release",
+            "configurePreset": "x86-release"
+        },
+        {
+            "name": "x86-relwithdebinfo",
+            "configurePreset": "x86-relwithdebinfo"
+        },
+        {
+            "name": "vs141-x86-debug",
+            "configurePreset": "vs141-x86-debug"
+        },
+        {
+            "name": "vs141-x64-debug",
+            "configurePreset": "vs141-x64-debug"
+        },
+
+        {
+            "name": "x-cross-qnx-x86_64",
+            "configurePreset": "x-cross-qnx-x86_64"
+        },
+        {
+            "name": "x-cross-qnx-armv7",
+            "configurePreset": "x-cross-qnx-armv7"
+        },
+        {
+            "name": "x-cross-qnx-aarch64",
+            "configurePreset": "x-cross-qnx-aarch64"
+        },
+
+
+
+        {
+            "name": "x-cross-armeabihf-debug",
+            "configurePreset": "x-cross-armeabihf-debug"
+        },
+        {
+            "name": "x-cross-armeabi-debug",
+            "configurePreset": "x-cross-armeabi-debug"
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2022 Vector Informatik GmbH
+#
+# SPDX-License-Identifier: MIT
+
+set(SilKit_VERSION @PROJECT_VERSION@)
+
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
+
+@PACKAGE_INIT@
+
+get_filename_component(SILKIT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include("${SILKIT_CMAKE_DIR}/SilKitTargets.cmake")

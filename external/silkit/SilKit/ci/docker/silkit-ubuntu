@@ -1,0 +1,112 @@
+ARG UBUNTU_VERSION=18.04
+
+ARG REGISTRY
+
+FROM ${REGISTRY}/ubuntu/bare:${UBUNTU_VERSION}
+
+ARG UBUNTU_VERSION
+ARG SILKIT_ARTIFACTORY_REPO
+ARG PROXY_DOMAIN
+
+# without TZ the apt installer will hang
+ENV TZ "Europe/Berlin"
+ENV DEBIAN_FRONTEND "noninteractive"
+ENV UBUNTU_VERSION ${UBUNTU_VERSION}
+ENV SILKIT_ARTIFACTORY_REPO ${SILKIT_ARTIFACTORY_REPO}
+ENV PROXY_DOMAIN ${PROXY_DOMAIN}
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+RUN mkdir -p /opt/vector
+ENV PATH="/opt/vector/bin:${PATH}"
+
+COPY fetch_apt_clang.sh /opt/vector/bin/
+
+RUN \
+        apt-get update \
+    && \
+        apt-get install --no-install-recommends --no-install-suggests -y wget gnupg2\
+    && \
+        fetch_apt_clang.sh \
+    && \
+        apt-get install --no-install-recommends --no-install-suggests -y \
+            doxygen \
+            cmake \
+            git \
+            subversion \
+            libc-dev \
+            make \
+            cppcheck \
+            manpages \
+            sysstat \
+            strace \
+            gdb \
+            ninja-build \
+            man \
+            wget \
+            curl  \
+            build-essential \
+            openssl \
+            libssl-dev \
+            g++ \
+            clang \
+            llvm \
+            lsb-base \
+            lsb-release \
+    && \
+        if [ "${UBUNTU_VERSION}" = "22.04" ]; then \
+            echo "Ubuntu ${UBUNTU_VERSION}: Installing python3 python3-pip" ; \
+            apt-get install --no-install-recommends --no-install-suggests -y \
+                python3 \
+                python3-pip \
+                python-is-python3 \
+                licensecheck \
+                ; \
+            echo "Ubuntu ${UBUNTU_VERSION}: Installing pipenv via pip" ; \
+            python3 -m pip install pipenv ; \
+        else \
+            echo "Ubuntu ${UBUNTU_VERSION}: Installing python3.8 python-pip-whl"; \
+            apt-get install --no-install-recommends --no-install-suggests -y \
+                python3.8 \
+                python3-pip \
+                ; \
+            echo "Ubuntu ${UBUNTU_VERSION}: Installing pipenv via pip" ; \
+            python3.8 -m pip install pipenv ; \
+            echo "Ubuntu ${UBUNTU_VERSION}: Make python3 the default" ; \
+            update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 ; \
+        fi \
+    && \
+        apt-get clean
+
+################################################################################
+# prepare our shell overlay
+# we install all custom packages as if they were installed with the prefix /opt/vector
+
+ARG ARTIFACTORY
+ENV BOOST_ROOT=/opt/vector
+
+# install download scripts to bin folder
+COPY fetch_cmake.sh /opt/vector/bin/
+COPY fetch_boost.sh /opt/vector/bin/
+
+RUN fetch_cmake.sh
+RUN fetch_boost.sh
+
+################################################################################
+# 3. Step: Setup our build user: jenkins
+################################################################################
+RUN useradd -r -g users -u 500  -m jenkins
+
+# Adding sphinx/breathe environment for documentation builds
+COPY docs_requirements.txt /home/jenkins
+RUN chown -R jenkins /home/jenkins
+
+USER jenkins
+
+ARG PYPI_MIRROR
+ENV PYPI_MIRROR ${PYPI_MIRROR}
+
+WORKDIR /home/jenkins
+ENV PATH="${PATH}:/home/jenkins/.local/bin"
+RUN python -m pip install  --index-url ${PYPI_MIRROR} pipenv

@@ -1,0 +1,6 @@
+bin/
+build/
+build_liboqs/
+build_silkit/
+.kdev4/
+PQC-ECUSim.kdev4

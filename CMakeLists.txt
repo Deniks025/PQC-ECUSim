@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.10)
+project(pqc-ecusim)
+
+set(CMAKE_CXX_STANDARD 17)
+set(PROJECT_INCLUDES ${PROJECT_SOURCE_DIR}/include)
+set(LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+
+include_directories(${PROJECT_INCLUDES})
+link_directories(${LIB_DIR})
+find_package(OpenSSL REQUIRED)
+
+add_executable(pqc-ecusim main.cpp)
+add_executable(rpm src/rpm.cpp)
+add_executable(spd src/spd.cpp)
+add_executable(motor src/motor.cpp)
+add_executable(trm src/auto_trm.cpp)
+add_executable(A8 src/a-sk_kem8.cpp)
+add_executable(fd-test src/canfd-test.cpp)
+add_executable(xl-test src/canxl-test.cpp)
+add_executable(B8 src/b-sk_kem8.cpp)
+add_executable(A64 src/a-sk_kem64.cpp)
+add_executable(B64 src/b-sk_kem64.cpp)
+add_executable(candump src/candump.cpp)
+
+
+target_link_libraries(pqc-ecusim PRIVATE SilKit oqs OpenSSL::Crypto ncurses pthread)
+target_link_libraries(rpm PRIVATE SilKit oqs OpenSSL::Crypto ncurses pthread)
+target_link_libraries(spd PRIVATE SilKit oqs OpenSSL::Crypto ncurses pthread)
+target_link_libraries(motor PRIVATE SilKit oqs OpenSSL::Crypto ncurses pthread)
+target_link_libraries(trm PRIVATE SilKit oqs OpenSSL::Crypto ncurses pthread)
+target_link_libraries(A8 PRIVATE SilKit oqs OpenSSL::Crypto)
+target_link_libraries(fd-test PRIVATE SilKit oqs OpenSSL::Crypto)
+target_link_libraries(xl-test PRIVATE SilKit oqs OpenSSL::Crypto)
+target_link_libraries(B8 PRIVATE SilKit oqs OpenSSL::Crypto)
+target_link_libraries(A64 PRIVATE SilKit oqs OpenSSL::Crypto)
+target_link_libraries(B64 PRIVATE SilKit oqs OpenSSL::Crypto)
+target_link_libraries(candump PRIVATE SilKit oqs OpenSSL::Crypto)
+

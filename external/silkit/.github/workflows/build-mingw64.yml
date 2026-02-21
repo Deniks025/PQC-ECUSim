@@ -1,0 +1,45 @@
+name: 'mingw64-x86_64'
+on:
+  workflow_call:
+    inputs:
+      run_build:
+        required: true
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      run_build:
+        default: true
+jobs:
+  mingw:
+    name: msys2/mingw64 ${{ matrix.builds.arch }}
+    defaults:
+      run:
+        shell:  C:\shells\msys2bash.cmd {0}
+
+    strategy:
+      matrix:
+        builds:
+          - arch: mingw-w64-x86_64
+            bin: /mingw64/bin
+          #- arch: i686
+          #  bin: /mingw32/bin
+
+    runs-on: windows-latest
+    if: inputs.run_build == true
+    steps:
+    - name: Setup host
+      run: |
+        pacman -S ${{ matrix.builds.arch }}-gcc ${{ matrix.builds.arch }}-cmake ${{ matrix.builds.arch }}-ninja ${{ matrix.builds.arch }}-yaml-cpp ${{ matrix.builds.arch }}-fmt ${{ matrix.builds.arch }}-gtest  ${{matrix.builds.arch}}-asio ${{matrix.builds.arch}}-spdlog --noconfirm
+
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - uses: ./.github/actions/build-cmake-preset
+      with:
+        preset-name: release
+        artifact-label: ${{ github.job }}-${{ matrix.builds.arch }}
+        cmake-args: -D SILKIT_BUILD_DOCS=OFF -D SILKIT_USE_SYSTEM_LIBRARIES=ON -D SILKIT_BUILD_DASHBOARD=OFF
+        extra-path: "${{ matrix.builds.bin }}:"
+        shell: C:\shells\msys2bash.cmd {0}

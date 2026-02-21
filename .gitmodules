@@ -1,0 +1,6 @@
+[submodule "external/liboqs"]
+	path = external/liboqs
+	url = https://github.com/open-quantum-safe/liboqs.git
+[submodule "external/silkit"]
+	path = external/silkit
+	url = https://github.com/vectorgrp/sil-kit.git
