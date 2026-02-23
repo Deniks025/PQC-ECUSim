@@ -51,7 +51,10 @@ int main()
     while(active){
         uint16_t rpm = currentRpm.load();
         uint16_t gear = currentGear.load();
-        spd.store((((float)rpm * WheelCircumference * 60.0f) / (gearRatios[gear] * FinalDrive * 1000.0f)*10.0f));
+        float targetSpeed = (((float)rpm * WheelCircumference * 60.0f) / (gearRatios[gear] * FinalDrive * 1000.0f) * 10.0f);
+        float currentSpeed = spd.load();
+        float smoothSpeed = currentSpeed + 0.1f * (targetSpeed - currentSpeed);
+        spd.store(smoothSpeed);
         SendOverCan(canCtrl, 0x400, encode(spd.load()));
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }

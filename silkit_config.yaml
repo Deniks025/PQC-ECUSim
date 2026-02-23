@@ -1,0 +1,10 @@
+Description: "CAN Sim PQC"
+
+Middleware:
+  RegistryUri: "silkit://localhost:8500"
+
+Logging:
+  LogFromRemotes: true
+  Sink:
+    Type: Stdout
+    Level: Info

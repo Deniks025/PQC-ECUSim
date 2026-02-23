@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <chrono>
+#include <thread>
 
 using namespace SilKit;
 using namespace SilKit::Services;
@@ -48,5 +49,9 @@ int main (){
     canController->Start();
     std::cout << "CAN FRAMES ON NETWORK: " << network<< std::endl;
 
-    while(active){}
+    while(active){
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    logfile.close();
+    return 0;
 }
