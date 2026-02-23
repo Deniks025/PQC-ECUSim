@@ -32,6 +32,15 @@ void SendOverCan(ICanController* canCtrl, uint32_t canId, const std::vector<uint
         canCtrl->SendFrame(frame);
         return;
     }
+    else if(data.size() <= 62){
+        buffer[0] = 0x00;
+        std::copy(data.begin(), data.end(), buffer.begin() + 1);
+        if (data.size() < 62){
+            std::fill(buffer.begin() + 1 + data.size(), buffer.end(), 0);
+        }
+        canCtrl->SendFrame(frame);
+        return;
+    }
 
     uint8_t seq = 0;
     size_t offset = 0;

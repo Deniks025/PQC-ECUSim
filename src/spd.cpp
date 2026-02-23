@@ -60,7 +60,7 @@ int main()
         float smoothSpeed = currentSpeed + 0.1f * (targetSpeed - currentSpeed);
         spd.store(smoothSpeed);
         SendOverCan(canCtrl, 0x400, encrypt_aes(encode(spd.load()), key));
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 

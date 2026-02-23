@@ -94,6 +94,6 @@ int main()
         }
         rpm.store(tempRpm);
         SendOverCan(canCtrl, 0x300, encrypt_aes(encode(tempRpm), key));
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
