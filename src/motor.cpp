@@ -64,7 +64,7 @@ int main()
         uint16_t gear = currentGear.load();
         load.store(((acc*(1-(float)rpm/max_rpm))/gearRatios[gear])*10.0f);
         SendOverCan(canCtrl, 0x500, encrypt_aes(encode(load.load()), key));
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 

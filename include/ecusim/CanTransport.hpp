@@ -11,6 +11,7 @@ using namespace SilKit::Services::Can;
 void SendOverCan(ICanController* canCtrl, uint32_t canId, const std::vector<uint8_t>& data)
 {
     std::array<uint8_t, 64> buffer;
+    uint16_t totalSize = static_cast<uint16_t>(data.size());
     CanFrame frame{};
     frame.canId = canId;
     if(data.size() <= 7){
@@ -32,11 +33,13 @@ void SendOverCan(ICanController* canCtrl, uint32_t canId, const std::vector<uint
         canCtrl->SendFrame(frame);
         return;
     }
-    else if(data.size() <= 62){
+    else if(data.size() <= 61){
         buffer[0] = 0x00;
-        std::copy(data.begin(), data.end(), buffer.begin() + 1);
-        if (data.size() < 62){
-            std::fill(buffer.begin() + 1 + data.size(), buffer.end(), 0);
+        buffer[1] = static_cast<uint8_t>((totalSize >> 8) & 0xFF);
+        buffer[2] = static_cast<uint8_t>(totalSize & 0xFF);
+        std::copy(data.begin(), data.end(), buffer.begin() + 3);
+        if (data.size() < 61){
+            std::fill(buffer.begin() + 3 + data.size(), buffer.end(), 0);
         }
         canCtrl->SendFrame(frame);
         return;
@@ -44,7 +47,7 @@ void SendOverCan(ICanController* canCtrl, uint32_t canId, const std::vector<uint
 
     uint8_t seq = 0;
     size_t offset = 0;
-    uint16_t totalSize = static_cast<uint16_t>(data.size());
+
 
     buffer[0] = 0x01;
     buffer[1] = seq++;
@@ -75,9 +78,9 @@ void SendOverCan(ICanController* canCtrl, uint32_t canId, const std::vector<uint
 struct CanReassembler
 {
     std::vector<uint8_t> buffer;
-    uint16_t totalSize = 0;
     bool receiving = false;
     uint8_t expectedSeq = 0;
+    uint16_t totalSize = 0;
 
     bool OnFrame(const CanFrame& f)
     {
@@ -85,8 +88,11 @@ struct CanReassembler
         uint8_t seq = f.dataField[1];
 
         if (type == 0x00){
+            if(f.dlc == 64){
+                totalSize = (static_cast<uint16_t>(f.dataField[1]) << 8) | static_cast<uint16_t>(f.dataField[2]);
+            }
             buffer.clear();
-            AppendSF(f);
+            AppendSF(f, totalSize);
             return true;
         }
 
@@ -94,7 +100,7 @@ struct CanReassembler
             totalSize = (static_cast<uint16_t>(f.dataField[2]) << 8) | static_cast<uint16_t>(f.dataField[3]);
             buffer.clear();
             buffer.reserve(totalSize);
-            AppendFF(f);
+            AppendFF(f, totalSize);
             receiving = true;
             expectedSeq = seq;
             return false;
@@ -108,7 +114,7 @@ struct CanReassembler
         expectedSeq = seq;
 
         if (type == 0x02){
-            Append(f);
+            Append(f, totalSize);
             return false;
         }
 
@@ -120,23 +126,24 @@ struct CanReassembler
         return false;
     }
 
-    void AppendSF(const CanFrame& f)
+    void AppendSF(const CanFrame& f, uint16_t t)
     {
-        for (int i = 1; i < f.dlc; ++i)
+        t += 3;
+        for (int i = 3; i < std::min(f.dlc, t); ++i)
             buffer.push_back(f.dataField[i]);
     }
 
-    void AppendFF(const CanFrame& f)
+    void AppendFF(const CanFrame& f, uint16_t t)
     {
-        for (int i = 4; i < f.dlc; ++i)
-            if (buffer.size() < totalSize){
-                buffer.push_back(f.dataField[i]);
-    }
+        t += 4;
+        for (int i = 4; i < std::min(f.dlc, t); ++i)
+            buffer.push_back(f.dataField[i]);
     }
 
-    void Append(const CanFrame& f)
+    void Append(const CanFrame& f, uint16_t t)
     {
-        for (int i = 2; i < f.dlc; ++i)
+        t += 2;
+        for (int i = 2; i < std::min(f.dlc, t); ++i)
             buffer.push_back(f.dataField[i]);
     }
 
