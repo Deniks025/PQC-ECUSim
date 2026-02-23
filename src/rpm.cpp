@@ -44,7 +44,7 @@ int main()
         }
         if (event.frame.canId == 0x600){
             if (reassembler.OnFrame(event.frame)){
-                currentGear.store(decode(reassembler.buffer));
+                currentGear.store(decode(decrypt_aes(reassembler.buffer, key)));
             }
         }
         if (event.frame.canId == 0x999){
@@ -93,7 +93,7 @@ int main()
             }
         }
         rpm.store(tempRpm);
-        SendOverCan(canCtrl, 0x300, encode(tempRpm));
+        SendOverCan(canCtrl, 0x300, encrypt_aes(encode(tempRpm), key));
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
