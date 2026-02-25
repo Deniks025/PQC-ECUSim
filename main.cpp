@@ -87,9 +87,9 @@ int main() {
             break;
         case 0x25:
             if (reasKey.OnFrame(event.frame)){
-                SendOverCan(canCtrl, 0x900, {0x99});
                 clusterKey = decrypt_aes(reasKey.buffer, key);
                 secureCluster = true;
+                SendOverCan(canCtrl, 0x900, clusterKey);
             }
             break;
         case 0x304:

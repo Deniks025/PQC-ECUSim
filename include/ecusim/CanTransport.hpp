@@ -125,8 +125,32 @@ struct CanReassembler
 
         return false;
     }
-
     void AppendSF(const CanFrame& f, uint16_t t)
+    {
+        size_t dataStart = (f.dlc == 64) ? 3 : 1;
+        size_t bytesToCopy = std::min((size_t)t, (size_t)(f.dlc - dataStart));
+        for (size_t i = 0; i < bytesToCopy; ++i)
+            buffer.push_back(f.dataField[dataStart + i]);
+    }
+    void AppendFF(const CanFrame& f, uint16_t t)
+    {
+        size_t dataStart = 4;
+        size_t bytesToCopy = std::min((size_t)t, (size_t)(f.dlc - dataStart));
+        for (size_t i = 0; i < bytesToCopy; ++i)
+            buffer.push_back(f.dataField[dataStart + i]);
+    }
+
+    void Append(const CanFrame& f, uint16_t t)
+    {
+        size_t dataStart = 2;
+        size_t currentBufferSize = buffer.size();
+        size_t remaining = (t > currentBufferSize) ? (t - currentBufferSize) : 0;
+        size_t bytesInFrame = f.dlc - dataStart;
+        size_t bytesToCopy = std::min(remaining, bytesInFrame);
+        for (size_t i = 0; i < bytesToCopy; ++i)
+            buffer.push_back(f.dataField[dataStart + i]);
+    }
+   /* void AppendSF(const CanFrame& f, uint16_t t)
     {
         t += 3;
         for (int i = 3; i < std::min(f.dlc, t); ++i)
@@ -146,7 +170,7 @@ struct CanReassembler
         for (int i = 2; i < std::min(f.dlc, t); ++i)
             buffer.push_back(f.dataField[i]);
     }
-
+*/
     void Reset()
     {
         receiving = false;
