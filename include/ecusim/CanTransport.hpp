@@ -17,7 +17,7 @@ void SendOverCan(ICanController* canCtrl, uint32_t canId, const std::vector<uint
     if(data.size() <= 7){
         frame.dlc = 8;
     }
-    else if(data.size() <= 62){
+    else{
         frame.flags = static_cast<CanFrameFlagMask>(CanFrameFlag::Fdf)
         | static_cast<CanFrameFlagMask>(CanFrameFlag::Brs);
         frame.dlc = 64;
@@ -164,7 +164,7 @@ uint16_t decode(std::vector<uint8_t> valBytes){
     return val;
 }
 
-std::vector<uint8_t> encrypt_aes(const std::vector<uint8_t>& plaintext, const uint8_t* key) {
+std::vector<uint8_t> encrypt_aes(const std::vector<uint8_t>& plaintext, std::vector<uint8_t>& key) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
     std::vector<uint8_t> iv(16);
@@ -175,7 +175,7 @@ std::vector<uint8_t> encrypt_aes(const std::vector<uint8_t>& plaintext, const ui
     std::vector<uint8_t> ciphertext(plaintext.size() + 16);
     int len, ciphertext_len;
 
-    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv.data());
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key.data(), iv.data());
     EVP_EncryptUpdate(ctx, ciphertext.data(), &len, plaintext.data(), plaintext.size());
     ciphertext_len = len;
     EVP_EncryptFinal_ex(ctx, ciphertext.data() + len, &len);
@@ -190,7 +190,7 @@ std::vector<uint8_t> encrypt_aes(const std::vector<uint8_t>& plaintext, const ui
     return final_packet;
 }
 
-std::vector<uint8_t> decrypt_aes(const std::vector<uint8_t>& combined_data, const uint8_t* key) {
+std::vector<uint8_t> decrypt_aes(const std::vector<uint8_t>& combined_data, std::vector<uint8_t>& key) {
     if (combined_data.size() < 32) {
         throw std::runtime_error("Dati insufficienti per la decriptazione (pacchetto troppo corto)");
     }
@@ -205,7 +205,7 @@ std::vector<uint8_t> decrypt_aes(const std::vector<uint8_t>& combined_data, cons
     int len;
     int plaintext_len;
 
-    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv) != 1) {
+    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key.data(), iv) != 1) {
         EVP_CIPHER_CTX_free(ctx);
         throw std::runtime_error("Errore nell'inizializzazione della decriptazione");
     }

@@ -22,7 +22,6 @@ int main()
     auto* canCtrl = participant->CreateCanController("CAN_CTRL_RPM", "CAN1");
 
     static CanReassembler reassembler;
-
     std::atomic<uint16_t> rpm{800};
     std::atomic<uint16_t> currentAcc{0};
     std::atomic<uint16_t> currentGear{1};
@@ -30,7 +29,7 @@ int main()
     const uint16_t max_rpm = 6000; // or "redline" rpm
     bool active = true;
     uint16_t lastGear = 1;
-    uint8_t key[32] = {0x69, 0xd3, 0x68, 0x1a, 0x72, 0x28, 0x2e, 0x24,
+    std::vector<uint8_t> key = {0x69, 0xd3, 0x68, 0x1a, 0x72, 0x28, 0x2e, 0x24,
         0x42, 0xb2, 0x6a, 0xfa, 0xed, 0x94, 0x48, 0xbe,
         0x3c, 0x64, 0x56, 0xdf, 0xa1, 0x32, 0xf8, 0x6d,
         0x4f, 0x96, 0x9a, 0xfa, 0xfc, 0xad, 0x35, 0x5c};
@@ -53,7 +52,6 @@ int main()
     });
 
     canCtrl->Start();
-
     while(active){
         uint16_t acc = currentAcc.load();
         uint16_t tempRpm = rpm.load();

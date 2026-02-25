@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Accensione monitor..."
-konsole  --title "ECU RPM" -e "./bin/candump" &
+konsole  --title "ECU MONITOR" -e "./bin/candump" &
 sleep 1
 echo "Avvio ECU..."
 ./bin/rpm &
