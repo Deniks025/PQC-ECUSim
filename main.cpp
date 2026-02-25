@@ -54,19 +54,24 @@ int main() {
     auto* canCtrl = participant->CreateCanController("SIMULATOR_CTRL", "CAN1");
     OQS_init();
     OQS_KEM* kem = OQS_KEM_new("Kyber512");
-    static CanReassembler reassembler;
+    static CanReassembler reasPK;
+    static CanReassembler reasKey;
+    static CanReassembler reasRpm;
+    static CanReassembler reasSpd;
+    static CanReassembler reasMotor;
+    static CanReassembler reasGear;
     std::atomic<uint16_t> rpm{0}, spd{0}, load{0}, gear{0};
     std::vector<uint8_t> key(kem->length_shared_secret);
     std::vector<uint8_t> clusterKey(32);
-    bool secureCluster = false;
+    std::atomic<bool> secureCluster{false};
     std::thread inputThread(keyboardInputThread);
 
      canCtrl->AddFrameHandler([&](ICanController*, const CanFrameEvent& event)
     {
         switch (event.frame.canId){
         case 0x091:
-            if (reassembler.OnFrame(event.frame)){
-                std::vector<uint8_t> pk = reassembler.buffer;
+            if (reasPK.OnFrame(event.frame)){
+                std::vector<uint8_t> pk = reasPK.buffer;
                 if (!kem){
                     std::cerr << "Error in KEM creation" << std::endl;
                     return;
@@ -78,33 +83,33 @@ int main() {
                     return;
                 }
                 SendOverCan(canCtrl, 0x202, ciphertext);
-                OQS_KEM_free(kem);
             }
             break;
-        case 0x025:
-            if (reassembler.OnFrame(event.frame)){
-                clusterKey = decrypt_aes(reassembler.buffer, key);
+        case 0x25:
+            if (reasKey.OnFrame(event.frame)){
+                SendOverCan(canCtrl, 0x900, {0x99});
+                clusterKey = decrypt_aes(reasKey.buffer, key);
                 secureCluster = true;
             }
             break;
         case 0x304:
-            if (reassembler.OnFrame(event.frame)){
-                rpm.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            if (reasRpm.OnFrame(event.frame)){
+                rpm.store(decode(decrypt_aes(reasRpm.buffer, clusterKey)));
             }
             break;
         case 0x404:
-            if (reassembler.OnFrame(event.frame)){
-                spd.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            if (reasSpd.OnFrame(event.frame)){
+                spd.store(decode(decrypt_aes(reasSpd.buffer, clusterKey)));
             }
             break;
         case 0x504:
-            if (reassembler.OnFrame(event.frame)){
-                load.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            if (reasMotor.OnFrame(event.frame)){
+                load.store(decode(decrypt_aes(reasMotor.buffer, clusterKey)));
             }
             break;
         case 0x604:
-            if (reassembler.OnFrame(event.frame)){
-                gear.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            if (reasGear.OnFrame(event.frame)){
+                gear.store(decode(decrypt_aes(reasGear.buffer, clusterKey)));
             }
             break;
         }
@@ -115,7 +120,7 @@ int main() {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     while (g_simulatorActive) {
         uint16_t acc = g_acceleration.load()*4;
-        if(secureCluster){
+        if(secureCluster.load()){
             SendOverCan(canCtrl, 0x204, encrypt_aes(encode(acc), clusterKey));
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -126,12 +131,21 @@ int main() {
         mvprintw(2, 0, "Velocità: %.1f    ", speed);
         mvprintw(3, 0, "Sforzo motore: %.1f     ", stress);
         mvprintw(4, 0, "Marcia: %.1u  ", gear.load());
-        mvprintw(5, 0, "Premi '%c' per accelerare, 'q' per uscire.", 'w'); 
+        mvprintw(5, 0, "Premi '%c' per accelerare, 'q' per uscire.", 'w');
+        char hex_key[65];
+        for (int i = 0; i < 32; i++) {
+            sprintf(&hex_key[i * 2], "%02x", clusterKey[i]);
+        }
+        hex_key[64] = '\0';
+
+        mvprintw(10, 0, "DEBUG KEY: %s", hex_key);
+
         refresh();
     }
     inputThread.join();
     std::vector<uint8_t> stopData = {0x01};
     SendOverCan(canCtrl, 0x999, stopData);
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    OQS_KEM_free(kem);
     return 0;
 } 

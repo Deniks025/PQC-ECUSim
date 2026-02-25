@@ -22,7 +22,9 @@ int main()
     auto* canCtrl = participant->CreateCanController("CAN_CTRL_TRM", "CAN1");
     OQS_init();
     OQS_KEM* kem = OQS_KEM_new("Kyber512");
-    static CanReassembler reassembler;
+    static CanReassembler reasPK;
+    static CanReassembler reasKey;
+    static CanReassembler reasRpm;
     std::vector<uint8_t> key(kem->length_shared_secret);
     std::vector<uint8_t> clusterKey(32);
     bool secureCluster = false;
@@ -34,8 +36,8 @@ int main()
     {
         switch (event.frame.canId){
         case 0x191:
-            if (reassembler.OnFrame(event.frame)){
-                std::vector<uint8_t> pk = reassembler.buffer;
+            if (reasPK.OnFrame(event.frame)){
+                std::vector<uint8_t> pk = reasPK.buffer;
                 if (!kem){
                     std::cerr << "Error in KEM creation" << std::endl;
                     return;
@@ -47,18 +49,17 @@ int main()
                     return;
                 }
                 SendOverCan(canCtrl, 0x612, ciphertext);
-                OQS_KEM_free(kem);
             }
             break;
         case 0x165:
-            if (reassembler.OnFrame(event.frame)){
-                clusterKey = decrypt_aes(reassembler.buffer, key);
+            if (reasKey.OnFrame(event.frame)){
+                clusterKey = decrypt_aes(reasKey.buffer, key);
                 secureCluster = true;
             }
             break;
         case 0x314:
-            if (reassembler.OnFrame(event.frame)){
-                currentRpm.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            if (reasRpm.OnFrame(event.frame)){
+                currentRpm.store(decode(decrypt_aes(reasRpm.buffer, clusterKey)));
             }
             break;
         case 0x999:
@@ -80,5 +81,6 @@ int main()
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
+    OQS_KEM_free(kem);
 }
 
