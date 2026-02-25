@@ -52,53 +52,72 @@ int main() {
     auto config = SilKit::Config::ParticipantConfigurationFromFile("silkit_config.yaml");
     auto participant = SilKit::CreateParticipant(config, "SIMULATOR");
     auto* canCtrl = participant->CreateCanController("SIMULATOR_CTRL", "CAN1");
-
+    OQS_init();
+    OQS_KEM* kem = OQS_KEM_new("Kyber512");
     static CanReassembler reassembler;
     std::atomic<uint16_t> rpm{0}, spd{0}, load{0}, gear{0};
-    std::vector<uint8_t> key = {0x69, 0xd3, 0x68, 0x1a, 0x72, 0x28, 0x2e, 0x24,
-        0x42, 0xb2, 0x6a, 0xfa, 0xed, 0x94, 0x48, 0xbe,
-        0x3c, 0x64, 0x56, 0xdf, 0xa1, 0x32, 0xf8, 0x6d,
-        0x4f, 0x96, 0x9a, 0xfa, 0xfc, 0xad, 0x35, 0x5c};
-
+    std::vector<uint8_t> key(kem->length_shared_secret);
+    std::vector<uint8_t> clusterKey(32);
+    bool secureCluster = false;
     std::thread inputThread(keyboardInputThread);
 
      canCtrl->AddFrameHandler([&](ICanController*, const CanFrameEvent& event)
     {
-        switch (event.frame.canId) {
-        case 0x300:
+        switch (event.frame.canId){
+        case 0x091:
             if (reassembler.OnFrame(event.frame)){
-                rpm.store(decode(decrypt_aes(reassembler.buffer, key)));
+                std::vector<uint8_t> pk = reassembler.buffer;
+                if (!kem){
+                    std::cerr << "Error in KEM creation" << std::endl;
+                    return;
+                }
+                std::vector<uint8_t> ciphertext(kem->length_ciphertext);
+                if (OQS_KEM_encaps(kem, ciphertext.data(), key.data(), pk.data()) != OQS_SUCCESS){
+                    std::cerr << "Error during Encapsulation" << std::endl;
+                    OQS_KEM_free(kem);
+                    return;
+                }
+                SendOverCan(canCtrl, 0x202, ciphertext);
+                OQS_KEM_free(kem);
             }
             break;
-        case 0x400:
+        case 0x025:
             if (reassembler.OnFrame(event.frame)){
-                spd.store(decode(decrypt_aes(reassembler.buffer, key)));
+                clusterKey = decrypt_aes(reassembler.buffer, key);
+                secureCluster = true;
             }
             break;
-        case 0x500:
+        case 0x304:
             if (reassembler.OnFrame(event.frame)){
-                load.store(decode(decrypt_aes(reassembler.buffer, key)));
+                rpm.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
             }
             break;
-        case 0x600:
+        case 0x404:
             if (reassembler.OnFrame(event.frame)){
-                gear.store(decode(decrypt_aes(reassembler.buffer, key)));
+                spd.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            }
+            break;
+        case 0x504:
+            if (reassembler.OnFrame(event.frame)){
+                load.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            }
+            break;
+        case 0x604:
+            if (reassembler.OnFrame(event.frame)){
+                gear.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
             }
             break;
         }
     });
 
     canCtrl->Start();
+    SendOverCan(canCtrl, 0x200, {0x01});
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     while (g_simulatorActive) {
         uint16_t acc = g_acceleration.load()*4;
-        std::vector<uint8_t> key = {0x69, 0xd3, 0x68, 0x1a, 0x72, 0x28, 0x2e, 0x24,
-            0x42, 0xb2, 0x6a, 0xfa, 0xed, 0x94, 0x48, 0xbe,
-            0x3c, 0x64, 0x56, 0xdf, 0xa1, 0x32, 0xf8, 0x6d,
-            0x4f, 0x96, 0x9a, 0xfa, 0xfc, 0xad, 0x35, 0x5c};
-
-        std::vector<uint8_t> accBytes = encrypt_aes(encode(acc), key);
-        SendOverCan(canCtrl, 0x200, accBytes);
+        if(secureCluster){
+            SendOverCan(canCtrl, 0x204, encrypt_aes(encode(acc), clusterKey));
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         float speed = spd.load()/10.0f;
         float stress = load.load()/10.0f;

@@ -20,8 +20,12 @@ int main()
     auto config = SilKit::Config::ParticipantConfigurationFromFile("silkit_config.yaml");
     auto participant = SilKit::CreateParticipant(config, "ECU_RPM");
     auto* canCtrl = participant->CreateCanController("CAN_CTRL_RPM", "CAN1");
-
+    OQS_init();
+    OQS_KEM* kem = OQS_KEM_new("Kyber512");
     static CanReassembler reassembler;
+    std::vector<uint8_t> key(kem->length_shared_secret);
+    std::vector<uint8_t> clusterKey(32);
+    bool secureCluster = false;
     std::atomic<uint16_t> rpm{800};
     std::atomic<uint16_t> currentAcc{0};
     std::atomic<uint16_t> currentGear{1};
@@ -29,29 +33,51 @@ int main()
     const uint16_t max_rpm = 6000; // or "redline" rpm
     bool active = true;
     uint16_t lastGear = 1;
-    std::vector<uint8_t> key = {0x69, 0xd3, 0x68, 0x1a, 0x72, 0x28, 0x2e, 0x24,
-        0x42, 0xb2, 0x6a, 0xfa, 0xed, 0x94, 0x48, 0xbe,
-        0x3c, 0x64, 0x56, 0xdf, 0xa1, 0x32, 0xf8, 0x6d,
-        0x4f, 0x96, 0x9a, 0xfa, 0xfc, 0xad, 0x35, 0x5c};
 
     canCtrl->AddFrameHandler([&](ICanController*, const CanFrameEvent& event)
     {
-        if (event.frame.canId == 0x200){
+        switch (event.frame.canId){
+        case 0x091:
             if (reassembler.OnFrame(event.frame)){
-                currentAcc.store(decode(decrypt_aes(reassembler.buffer, key)));
+                std::vector<uint8_t> pk = reassembler.buffer;
+                if (!kem){
+                    std::cerr << "Error in KEM creation" << std::endl;
+                    return;
+                }
+                std::vector<uint8_t> ciphertext(kem->length_ciphertext);
+                if (OQS_KEM_encaps(kem, ciphertext.data(), key.data(), pk.data()) != OQS_SUCCESS){
+                    std::cerr << "Error during Encapsulation" << std::endl;
+                    OQS_KEM_free(kem);
+                    return;
+                }
+                SendOverCan(canCtrl, 0x302, ciphertext);
+                OQS_KEM_free(kem);
             }
-        }
-        if (event.frame.canId == 0x600){
+            break;
+        case 0x035:
             if (reassembler.OnFrame(event.frame)){
-                currentGear.store(decode(decrypt_aes(reassembler.buffer, key)));
+                clusterKey = decrypt_aes(reassembler.buffer, key);
+                secureCluster = true;
             }
-        }
-        if (event.frame.canId == 0x999){
-            active = false;    
+            break;
+        case 0x204:
+            if (reassembler.OnFrame(event.frame)){
+                currentAcc.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            }
+            break;
+        case 0x604:
+            if (reassembler.OnFrame(event.frame)){
+                currentGear.store(decode(decrypt_aes(reassembler.buffer, clusterKey)));
+            }
+            break;
+        case 0x999:
+            active = false;
+            break;
         }
     });
 
     canCtrl->Start();
+    SendOverCan(canCtrl, 0x300, {0x01});
     while(active){
         uint16_t acc = currentAcc.load();
         uint16_t tempRpm = rpm.load();
@@ -91,7 +117,9 @@ int main()
             }
         }
         rpm.store(tempRpm);
-        SendOverCan(canCtrl, 0x300, encrypt_aes(encode(tempRpm), key));
+        if(secureCluster){
+            SendOverCan(canCtrl, 0x304, encrypt_aes(encode(tempRpm), clusterKey));
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
