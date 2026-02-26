@@ -15,7 +15,8 @@ using namespace SilKit;
 using namespace SilKit::Services;
 using namespace SilKit::Services::Can;
 
-int main (){
+int main ()
+{
     std::string participantName = "Cluster_A";
     std::string registryUri = "silkit://localhost:8500";
     std::string network = "CAN1";
@@ -26,17 +27,18 @@ int main (){
 
     OQS_init();
     OQS_KEM* kem = OQS_KEM_new("Kyber512");
-    if (!kem){
+    if (!kem) {
         std::cerr << "Error in KEM creation" << std::endl;
         return -1;
     }
     std::vector<uint8_t> pk(kem->length_public_key);
     std::vector<uint8_t> sk(kem->length_secret_key);
-    if (OQS_KEM_keypair(kem, pk.data(), sk.data()) != OQS_SUCCESS){
+    if (OQS_KEM_keypair(kem, pk.data(), sk.data()) != OQS_SUCCESS) {
         std::cerr << "Keypair generation error" << std::endl;
         OQS_KEM_free(kem);
         return -1;
     }
+
     std::vector<uint8_t> clusterKeyA(32);
     std::random_device rd;
     std::generate(clusterKeyA.begin(), clusterKeyA.end(), std::ref(rd));
@@ -44,11 +46,13 @@ int main (){
     std::vector<uint8_t> key_rpm(kem->length_shared_secret);
     std::vector<uint8_t> key_motor(kem->length_shared_secret);
     std::vector<uint8_t> key_c(kem->length_shared_secret);
+
     static bool pk_sent = false;
     bool clusterB = false;
     bool activeAcc = false;
     bool activeRpm = false;
     bool activeMotor = false;
+
     static CanReassembler reasCTC;
     static CanReassembler reasCTAcc;
     static CanReassembler reasCTRpm;
@@ -73,18 +77,18 @@ int main (){
             activeMotor = true;
             break;
         case 0x1a2:
-            if (reasCTC.OnFrame(event.frame)){
+            if (reasCTC.OnFrame(event.frame)) {
                 std::vector<uint8_t> ciphertext = reasCTC.buffer;
-                if (OQS_KEM_decaps(kem, key_c.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS){
+                if (OQS_KEM_decaps(kem, key_c.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS) {
                     std::cerr << "Error during decapsulation" << std::endl;
                     return;
                 }
             }
             break;
         case 0x202:
-            if (reasCTAcc.OnFrame(event.frame)){
+            if (reasCTAcc.OnFrame(event.frame)) {
                 std::vector<uint8_t> ciphertext = reasCTAcc.buffer;
-                if (OQS_KEM_decaps(kem, key_acc.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS){
+                if (OQS_KEM_decaps(kem, key_acc.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS) {
                     std::cerr << "Error during decapsulation" << std::endl;
                     return;
                 }
@@ -92,9 +96,9 @@ int main (){
             }
             break;
         case 0x302:
-            if (reasCTRpm.OnFrame(event.frame)){
+            if (reasCTRpm.OnFrame(event.frame)) {
                 std::vector<uint8_t> ciphertext = reasCTRpm.buffer;
-                if (OQS_KEM_decaps(kem, key_rpm.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS){
+                if (OQS_KEM_decaps(kem, key_rpm.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS) {
                     std::cerr << "Error during decapsulation" << std::endl;
                     return;
                 }
@@ -102,9 +106,9 @@ int main (){
             }
             break;
         case 0x502:
-            if (reasCTMotor.OnFrame(event.frame)){
+            if (reasCTMotor.OnFrame(event.frame)) {
                 std::vector<uint8_t> ciphertext = reasCTMotor.buffer;
-                if (OQS_KEM_decaps(kem, key_motor.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS){
+                if (OQS_KEM_decaps(kem, key_motor.data(), ciphertext.data(), sk.data()) != OQS_SUCCESS) {
                     std::cerr << "Error during decapsulation" << std::endl;
                     return;
                 }
@@ -112,21 +116,21 @@ int main (){
             }
             break;
         case 0x4a4:
-            if (reasRDSpd.OnFrame(event.frame)){
+            if (reasRDSpd.OnFrame(event.frame)) {
                 std::vector<uint8_t> redirect = decrypt_aes(reasRDSpd.buffer, key_c);
                 redirect = encrypt_aes(redirect, clusterKeyA);
                 SendOverCan(canCtrl, 0x404, redirect);
             }
             break;
         case 0x6a4:
-            if (reasRDGear.OnFrame(event.frame)){
+            if (reasRDGear.OnFrame(event.frame)) {
                 std::vector<uint8_t> redirect = decrypt_aes(reasRDGear.buffer, key_c);
                 redirect = encrypt_aes(redirect, clusterKeyA);
                 SendOverCan(canCtrl, 0x604, redirect);
             }
             break;
         case 0x304:
-            if (reasRDRpm.OnFrame(event.frame)){
+            if (reasRDRpm.OnFrame(event.frame)) {
                 std::vector<uint8_t> redirect = decrypt_aes(reasRDRpm.buffer, clusterKeyA);
                 redirect = encrypt_aes(redirect, key_c);
                 SendOverCan(canCtrl, 0x3a4, redirect);
@@ -143,7 +147,7 @@ int main (){
     });
 
     canCtrl->Start();
-    while(active){
+    while(active) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     OQS_KEM_free(kem);
