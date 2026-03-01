@@ -35,6 +35,7 @@ For more in-depth guides on SIL Kit usage, please refer to the [official documen
 * ncurses: For the terminal-based Graphical User Interface.
 ## Installation
 ### 1. Dependencies
+First, ensure your system has the necessary build tools and libraries installed.
 #### On Fedora:
 ```bash
 sudo dnf install cmake gcc-c++ openssl-devel ncurses-devel
@@ -44,15 +45,18 @@ sudo dnf install cmake gcc-c++ openssl-devel ncurses-devel
 sudo apt-get install cmake g++ libssl-dev libncurses5-dev libncursesw5-dev
 ```
 ### 2. Getting source
+Clone the repository from GitHub and navigate into the project directory:
 ```bash
 git clone https://github.com/your-username/PQC-ECUSim.git
 cd PQC-ECUSim
 ```
 ### 3. Initialize Submodules
+This project relies on external libraries (such as SIL Kit and liboqs). Use the following command to fetch and update all required submodules:
 ```bash
 git submodule update --init --recursive
 ```
 ### 4. Build
+Finally, configure the project and compile the binaries using CMake:
 ```bash
 cmake .
 cmake --build .
