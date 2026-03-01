@@ -22,7 +22,7 @@ Individual KEM handshakes for every ECU pair (P2P) are too resource-intensive fo
 ## Requirements
 To build and run the simulator, ensure your system meets the following requirements:
 ### Vector SIL Kit
-The core of this project is the Vector SIL Kit, which provides the optimized communication abstraction for the virtual CAN/CAN FD bus.\\
+The core of this project is the Vector SIL Kit, which provides the optimized communication abstraction for the virtual CAN/CAN FD bus.\n
 Official Repository: [vectorgrp/sil-kit](https://github.com/vectorgrp/sil-kit.git)
 Build it from source following their GitHub instructions.
 For more in-depth guides on SIL Kit usage, please refer to the [official documentation](https://vectorgrp.github.io/sil-kit-docs/).
