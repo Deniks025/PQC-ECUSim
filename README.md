@@ -20,7 +20,18 @@ All frames are encrypted through AES-256 with an hard-coded static key across al
 #### Post-Quantum Hybrid Clustering (feature/pqc-cluster Branch)
 Individual KEM handshakes for every ECU pair (P2P) are too resource-intensive for automotive hardware. Conversely, a single global gateway key creates a Single Point of Failure (SPOF). In this project ECUs are grouped into Security Clusters (in this case a cluster of 3 and a cluster of 2) that performs a Kyber (PQC) KEM handshake to establish a shared secret within the group, utilizing [liboqs](https://github.com/open-quantum-safe/liboqs.git) for quantum-resistant key exchange.
 ## Requirements
-
+To build and run the simulator, ensure your system meets the following requirements:
+### Vector SIL Kit
+The core of this project is the Vector SIL Kit, which provides the optimized communication abstraction for the virtual CAN/CAN FD bus.
+Official Repository: [vectorgrp/sil-kit](https://github.com/vectorgrp/sil-kit.git)
+Build it from source following their GitHub instructions.
+For more in-depth guides on SIL Kit usage, please refer to the [official documentation](https://vectorgrp.github.io/sil-kit-docs/).
+### Building tools
+* CMake (3.14+)
+* A C++ compiler supporting C++17 or higher (e.g., g++ 9+ or clang).
+### System Libraries
+* OpenSSL: For AES-256 cryptographic operations.
+* ncurses: For the terminal-based Graphical User Interface.
 ## Installation
 
 ## Execution
