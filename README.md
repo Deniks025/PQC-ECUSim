@@ -34,7 +34,7 @@ For more in-depth guides on SIL Kit usage, please refer to the [official documen
 * OpenSSL: For AES-256 cryptographic operations.
 * ncurses: For the terminal-based Graphical User Interface.
 ## Installation
-### Dependencies
+1. ### Dependencies
 #### On Fedora:
 ```bash
 sudo dnf install cmake gcc-c++ openssl-devel ncurses-devel
@@ -43,16 +43,16 @@ sudo dnf install cmake gcc-c++ openssl-devel ncurses-devel
 ```bash
 sudo apt-get install cmake g++ libssl-dev libncurses5-dev libncursesw5-dev
 ```
-### Getting source
+2. ### Getting source
 ```bash
 git clone https://github.com/your-username/PQC-ECUSim.git
 cd PQC-ECUSim
 ```
-### Initialize Submodules
+3. ### Initialize Submodules
 ```bash
 git submodule update --init --recursive
 ```
-### Build
+4. ### Build
 ```bash
 cmake .
 cmake --build .
