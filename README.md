@@ -1,5 +1,5 @@
 # PQC-ECUSim
-Modular C++ simulator for secure automotive ECU networks. Implements multi-node CAN comunications using [Vector SIL Kit](https://github.com/vectorgrp/sil-kit.git)  and integrates post-quantum cryptography with liboqs.
+Modular C++ simulator for secure automotive ECU networks. Implements multi-node CAN comunications using [Vector SIL Kit](https://github.com/vectorgrp/sil-kit.git) and integrates post-quantum cryptography with liboqs.
 ## Overview
 This project is a distributed ECU (Electronic Control Unit) simulator built with SilKit, designed to demonstrate secure intra-vehicle communication using Post-Quantum Cryptography (PQC) and traditional AES-256 encryption. The simulation models a vehicle powertrain dynamic, including throttle input, RPM calculation, engine torque (stress), speed, and an automatic transmission system.
 ### Currently simulated components
@@ -18,7 +18,7 @@ The project implements a custom transport layer inspired by the ISO-TP (ISO 1576
 #### Static Security (Main Branch)
 All frames are encrypted through AES-256 with an hard-coded static key across all ECUs.
 #### Post-Quantum Hybrid Clustering (features/pqc-cluster Branch)
-Individual KEM handshakes for every ECU pair (P2P) are too resource-intensive for automotive hardware. Conversely, a single global gateway key creates a Single Point of Failure (SPOF). In this project ECUs are grouped into Security Clusters (in this case a cluster of 3 and a cluster of 2) that performs a Kyber (PQC) KEM handshake to establish a shared secret within the group, utilizing [liboqs](https://github.com/open-quantum-safe/liboqs.git)for quantum-resistant key exchange.
+Individual KEM handshakes for every ECU pair (P2P) are too resource-intensive for automotive hardware. Conversely, a single global gateway key creates a Single Point of Failure (SPOF). In this project ECUs are grouped into Security Clusters (in this case a cluster of 3 and a cluster of 2) that performs a Kyber (PQC) KEM handshake to establish a shared secret within the group, utilizing [liboqs](https://github.com/open-quantum-safe/liboqs.git) for quantum-resistant key exchange.
 ## Requirements
 
 ## Installation
