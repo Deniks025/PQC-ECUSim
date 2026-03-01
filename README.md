@@ -9,7 +9,7 @@ This project is a distributed ECU (Electronic Control Unit) simulator built with
 * Speed (SPD) ECU: Calculates vehicle speed based on RPM and current gear.
 * Auto Transmission (Auto_TRM): An automatic gearbox logic that manages gear shifts.
 * Network Logger (candump): A dedicated participant that monitors all bus traffic, providing real-time terminal output and saving session logs to .txt for forensic analysis.
-* [feature/pqc-cluster] Cluster Managers: dedicated participa
+* [feature/pqc-cluster] Cluster Managers: dedicated participants responsible for the security lifecycle of an ECU group. They perform the liboqs Kyber-512 handshake to establish and distribute shared session keys, while acting as secure gateways for inter-cluster data routing and re-encryption.
 ### Transport protocol 
 The project implements a custom transport layer inspired by the ISO-TP (ISO 15765-2) protocol. It dynamically manages data segmentation using a specialized header:
 * Adaptive Framing: Automatically switches between Standard CAN and CAN FD based on payload size.
