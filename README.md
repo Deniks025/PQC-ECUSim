@@ -18,7 +18,8 @@ The project implements a custom transport layer inspired by the ISO-TP (ISO 1576
 #### Static Security (Main Branch)
 All frames are encrypted through AES-256 with an hard-coded static key across all ECUs.
 #### Post-Quantum Hybrid Clustering (feature/pqc-cluster Branch)
-Individual KEM handshakes for every ECU pair (P2P) are too resource-intensive for automotive hardware. Conversely, a single global gateway key creates a Single Point of Failure (SPOF). In this project ECUs are grouped into Security Clusters (in this case a cluster of 3 and a cluster of 2) that performs a Kyber (PQC) KEM handshake to establish a shared secret within the group, utilizing [liboqs](https://github.com/open-quantum-safe/liboqs.git) for quantum-resistant key exchange.
+Individual KEM handshakes for every ECU pair (P2P) are too resource-intensive for automotive hardware. Conversely, a single global gateway key creates a Single Point of Failure (SPOF).  
+In this project ECUs are grouped into Security Clusters (in this case a cluster of 3 and a cluster of 2) that performs a Kyber (PQC) KEM handshake to establish a shared secret within the group, utilizing [liboqs](https://github.com/open-quantum-safe/liboqs.git) for quantum-resistant key exchange.
 ## Requirements
 To build and run the simulator, ensure your system meets the following requirements:
 ### Vector SIL Kit
@@ -33,7 +34,10 @@ For more in-depth guides on SIL Kit usage, please refer to the [official documen
 * OpenSSL: For AES-256 cryptographic operations.
 * ncurses: For the terminal-based Graphical User Interface.
 ## Installation
-
-## Execution
+```bash
+git submodule update --init --recursive
+cmake .
+cmake --build .
+```
 
 
