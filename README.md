@@ -43,16 +43,16 @@ sudo dnf install cmake gcc-c++ openssl-devel ncurses-devel
 ```bash
 sudo apt-get install cmake g++ libssl-dev libncurses5-dev libncursesw5-dev
 ```
-## Getting source
+### Getting source
 ```bash
 git clone https://github.com/your-username/PQC-ECUSim.git
 cd PQC-ECUSim
 ```
-## Initialize Submodules
+### Initialize Submodules
 ```bash
 git submodule update --init --recursive
 ```
-## Build
+### Build
 ```bash
 cmake .
 cmake --build .
