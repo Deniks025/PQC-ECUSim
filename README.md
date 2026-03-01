@@ -34,10 +34,9 @@ For more in-depth guides on SIL Kit usage, please refer to the [official documen
 * OpenSSL: For AES-256 cryptographic operations.
 * ncurses: For the terminal-based Graphical User Interface.
 ## Installation
-```bash
+'''bash
 git submodule update --init --recursive
-cmake .
-cmake --build .
-```
+'''
+
 
 
