@@ -54,7 +54,7 @@ int main()
     auto* canCtrl = participant->CreateCanController("SIMULATOR_CTRL", "CAN1");
 
     OQS_init();
-    OQS_KEM* kem = OQS_KEM_new("Kyber512");
+    OQS_KEM* kem = OQS_KEM_new("ML-KEM-512");
 
     static CanReassembler reasPK;
     static CanReassembler reasKey;
