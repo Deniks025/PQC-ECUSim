@@ -26,7 +26,7 @@ int main ()
     auto* canCtrl = participant->CreateCanController("CANCtrl", network);
 
     OQS_init();
-    OQS_KEM* kem = OQS_KEM_new("Kyber512");
+    OQS_KEM* kem = OQS_KEM_new("ML-KEM-512");
     if (!kem) {
         std::cerr << "Error in KEM creation" << std::endl;
         return -1;
